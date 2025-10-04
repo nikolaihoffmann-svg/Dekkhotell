@@ -1,0 +1,58 @@
+/* service-worker.js */
+const APP_VER = 'v1.0.0';
+const PRECACHE = `precache-${APP_VER}`;
+const RUNTIME = `runtime-${APP_VER}`;
+
+const PRECACHE_URLS = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './app-icon-192.png',
+  './app-icon-512.png',
+  'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+  'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
+  'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(PRECACHE).then(cache => cache.addAll(PRECACHE_URLS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => ![PRECACHE, RUNTIME].includes(k)).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  const cacheFirst = url.origin === location.origin || url.href.startsWith('https://cdn.jsdelivr.net');
+
+  if (cacheFirst) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) return cached;
+        return fetch(request).then(res => {
+          const clone = res.clone();
+          caches.open(RUNTIME).then(c => c.put(request, clone));
+          return res;
+        }).catch(() => cached);
+      })
+    );
+  } else {
+    event.respondWith(
+      fetch(request).then(res => {
+        const clone = res.clone();
+        caches.open(RUNTIME).then(c => c.put(request, clone));
+        return res;
+      }).catch(() => caches.match(request))
+    );
+  }
+});

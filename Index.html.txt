@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Dekkhotell</title>
+
+  <!-- PWA: manifest + iOS farge + ikon -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#131a23">
+  <link rel="apple-touch-icon" href="app-icon-192.png">
+
+  <style>
+    :root{
+      --bg:#0b0f14;--panel:#131a23;--text:#eaf2ff;--muted:#9bb0c9;
+      --brand:#4cc9f0;--brand-2:#4361ee;--accent:#2ec4b6;--danger:#ff5c5c;--ok:#22c55e;
+      --border:#213142;--shadow:0 8px 28px rgba(0,0,0,.35)
+    }
+    [data-theme="light"]{
+      --bg:#f6f8fb;--panel:#ffffff;--text:#0b0f14;--muted:#475569;
+      --brand:#2463eb;--brand-2:#1b4fd1;--accent:#0ea5a0;--danger:#e11d48;--ok:#16a34a;
+      --border:#e7eef6;--shadow:0 8px 20px rgba(16,24,40,.08)
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);
+      font:15.5px/1.45 system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+    .app{max-width:1100px;margin:0 auto;padding:12px 12px calc(24px + env(safe-area-inset-bottom));}
+    header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 10px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;border-radius:9px;background:
+      radial-gradient(120% 120% at 0% 0%, var(--brand), transparent 58%),
+      radial-gradient(120% 120% at 100% 100%, var(--accent), transparent 58%),
+      linear-gradient(135deg, var(--brand-2), var(--brand)); box-shadow:var(--shadow)}
+    .title{font-weight:800;letter-spacing:.2px}
+    .muted{color:var(--muted)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+    .controls{padding:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    @media (max-width:720px){ .controls{grid-template-columns:1fr} }
+    input[type="search"],select,button{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);
+      appearance:none;outline:0
+    }
+    button{background:var(--brand);border:0;color:white;font-weight:700}
+    button.ghost{background:transparent;color:var(--text)}
+    button.danger{background:var(--danger)}
+    button.ok{background:var(--ok)}
+    .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:10px}
+    .card{padding:12px;border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;gap:8px}
+    .card h3{margin:0;font-size:1.05rem}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .badge{font-size:.75rem;padding:4px 8px;border-radius:999px;border:1px solid var(--border);
+      background:color-mix(in oklab, var(--brand) 14%, transparent)}
+    .badge.gray{background:transparent;color:var(--muted)}
+    .badge.ok{background:color-mix(in oklab, var(--ok) 18%, transparent)}
+    .badge.danger{background:color-mix(in oklab, var(--danger) 18%, transparent)}
+    .meta{color:var(--muted);font-size:.8rem}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .empty{padding:24px;text-align:center;color:var(--muted)}
+    .fab{position:fixed;right:16px;bottom:16px;inset-inline-end:16px;inset-block-end:calc(16px + env(safe-area-inset-bottom));
+      border-radius:999px;padding:14px 16px;box-shadow:var(--shadow);z-index:10}
+    dialog{border:0;border-radius:16px;padding:0;background:transparent}
+    .modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);width:min(680px,96vw)}
+    .modal header{padding:14px 14px 0}
+    .modal .content{padding:10px 14px 14px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:680px){ .grid{grid-template-columns:1fr} }
+    label{display:block;font-size:.85rem;color:var(--muted);margin:4px 0 6px}
+    input[type="text"],input[type="tel"],input[type="date"],textarea{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);outline:0
+    }
+    textarea{min-height:90px;resize:vertical}
+    .photo{width:100%;display:block;border-radius:12px;border:1px dashed var(--border);object-fit:cover;max-height:200px}
+    .sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+    .toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:8px 12px;border-radius:999px;background:transparent;color:var(--text)}
+    .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:color-mix(in oklab, var(--panel) 70%, white 30%);
+      padding:2px 6px;border-radius:6px;border:1px solid var(--border);font-size:.8rem;color:var(--muted)}
+    /* Print-etikett */
+    @media print{
+      body{background:white;color:black}
+      .label{width:80mm;height:40mm;border:1px solid #000;padding:6mm;display:flex;flex-direction:column;gap:4mm;break-inside:avoid}
+      .labels{display:grid;grid-template-columns:repeat(2, 90mm);gap:6mm}
+    }
+  </style>
+
+  <!-- Biblioteker: QR, strekkode, skanning -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/index.min.js"></script>
+</head>
+<body data-theme="light">
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="title">Dekkhotell</div>
+          <div class="muted">Oversikt · Søk · Skann · Koder ✔️</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="themeBtn" class="toggle" aria-pressed="false">🌞/🌙 <span class="muted">Tema</span></button>
+        <button id="scanBtn" class="toggle">📷 Skann</button>
+        <button id="exportBtn" class="toggle">📤 Eksporter</button>
+        <label for="importFile" class="toggle" style="cursor:pointer">📥 Importer</label>
+        <input id="importFile" type="file" accept="application/json" class="sr" />
+      </div>
+    </header>
+
+    <!-- Filtre og søk -->
+    <section class="panel">
+      <div class="controls">
+        <input id="q" type="search" placeholder="Søk: navn, regnr, størrelse, sted… ( / )" />
+        <select id="season">
+          <option value="">Sesong: alle</option>
+          <option value="sommer">Sommer</option>
+          <option value="vinter">Vinter</option>
+          <option value="helår">Helår</option>
+        </select>
+        <select id="status">
+          <option value="">Status: alle</option>
+          <option value="inn">På lager (INN)</option>
+          <option value="ut">Utlånt/montert (UT)</option>
+        </select>
+        <select id="sort">
+          <option value="updated_desc">Sorter: sist oppdatert ↓</option>
+          <option value="updated_asc">Sist oppdatert ↑</option>
+          <option value="reg_asc">Regnr A→Å</option>
+          <option value="name_asc">Navn A→Å</option>
+        </select>
+        <button id="clearFilters" class="ghost">Nullstill filtre</button>
+        <button id="addBtn" class="ok">+ Ny registrering</button>
+      </div>
+    </section>
+
+    <!-- Liste -->
+    <section id="list" class="items" aria-live="polite"></section>
+    <div id="empty" class="empty" hidden>Ingen registreringer ennå. Trykk “+ Ny registrering”.</div>
+
+    <button id="fab" class="fab ok">+ Ny</button>
+  </div>
+
+  <!-- Modal: Ny/Rediger -->
+  <dialog id="dlg">
+    <div class="modal">
+      <header><h2 id="dlgTitle">Ny registrering</h2></header>
+      <div class="content">
+        <form id="form" class="grid">
+          <input type="hidden" id="id" />
+          <div><label for="customer">Kundenavn</label><input id="customer" type="text" placeholder="Ola Nordmann" required /></div>
+          <div><label for="phone">Telefon</label><input id="phone" type="tel" placeholder="40000000" pattern="[0-9+ ]*" /></div>
+          <div><label for="reg">Bilens regnr</label><input id="reg" type="text" placeholder="AB12345" required /></div>
+          <div><label for="brand">Merke/modell (valgfritt)</label><input id="brand" type="text" placeholder="Nokian/Conti …" /></div>
+          <div><label for="size">Dimensjon</label><input id="size" type="text" placeholder="205/55 R16" required /></div>
+          <div><label for="seasonSel">Sesong</label><select id="seasonSel" required>
+            <option value="sommer">Sommer</option><option value="vinter">Vinter</option><option value="helår">Helår</option></select></div>
+          <div><label for="rims">Felgtype</label><select id="rims">
+            <option value="">Ukjent</option><option value="aluminium">Aluminium</option><option value="stål">Stål</option></select></div>
+          <div><label for="location">Lagerplass</label><input id="location" type="text" placeholder="R2-H3-P12" /></div>
+          <div><label for="statusSel">Status</label><select id="statusSel"><option value="inn">INN</option><option value="ut">UT</option></select></div>
+          <div><label for="checkIn">Innlevert</label><input id="checkIn" type="date" /></div>
+          <div><label for="checkOut">Uttak/montert</label><input id="checkOut" type="date" /></div>
+          <div class="grid" style="grid-template-columns:1fr"><label for="notes">Notater</label><textarea id="notes" placeholder="Mønsterdybde, skader…"></textarea></div>
+          <div class="grid" style="grid-template-columns:1fr">
+            <label for="photo">Bilde (valgfritt)</label>
+            <input id="photo" type="file" accept="image/*" capture="environment" />
+            <img id="preview" class="photo" alt="" hidden />
+          </div>
+          <div class="row" style="justify-content:flex-end;margin-top:6px">
+            <button type="button" id="cancel" class="ghost">Avbryt</button>
+            <button type="submit" id="save" class="ok">Lagre</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modal: Skann -->
+  <dialog id="scanDlg">
+    <div class="modal">
+      <header><h2>Skann QR/strekkode</h2></header>
+      <div class="content">
+        <div id="videoWrap" style="position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--border)">
+          <video id="video" playsinline style="width:100%;height:auto;background:black"></video>
+          <canvas id="overlay" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+        </div>
+        <div class="row" style="justify-content:space-between;margin-top:8px">
+          <div class="muted">Tips: hold 10–20 cm avstand.</div>
+          <div class="row"><button id="flipCam" class="ghost">Bytt kamera</button><button id="closeScan" class="danger">Lukk</button></div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modal: Koder -->
+  <dialog id="codeDlg">
+    <div class="modal">
+      <header><h2>Koder for <span id="codeTitle"></span></h2></header>
+      <div class="content">
+        <div class="grid">
+          <div>
+            <label>QR-kode (URL / ID)</label>
+            <canvas id="qrCanvas" style="width:100%;background:white;border-radius:12px"></canvas>
+          </div>
+          <div>
+            <label>Strekkode (Code128)</label>
+            <svg id="barSvg"></svg>
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-end;margin-top:8px">
+          <button id="printLbl" class="ghost">🖨️ Skriv ut etikett</button>
+          <button id="dlPng" class="ghost">⬇️ Last ned PNG</button>
+          <button id="closeCode" class="ok">Ferdig</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    /* -------------------- Liten, robust lokal database -------------------- */
+    const DB = (() => {
+      const KEY = "dekkhotell.v1";
+      const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) ?? []; } catch { return []; } };
+      const save = (rows) => localStorage.setItem(KEY, JSON.stringify(rows));
+      const id = () => crypto.randomUUID?.() || "id-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+      return { KEY, load, save, id };
+    })();
+
+    let rows = DB.load();
+
+    /* -------------------- Element-referanser -------------------- */
+    const $ = (q, el=document) => el.querySelector(q);
+    const listEl = $("#list");
+    const emptyEl = $("#empty");
+    const qEl = $("#q"), seasonEl = $("#season"), statusEl = $("#status"), sortEl = $("#sort");
+    const clearFiltersBtn = $("#clearFilters");
+    const addBtn = $("#addBtn"), fabBtn = $("#fab");
+    const dlg = $("#dlg"), form = $("#form");
+    const idEl = $("#id"), customerEl = $("#customer"), phoneEl = $("#phone"), regEl = $("#reg"),
+          brandEl = $("#brand"), sizeEl = $("#size"), seasonSel = $("#seasonSel"), rimsEl = $("#rims"),
+          locationEl = $("#location"), statusSel = $("#statusSel"), checkInEl = $("#checkIn"),
+          checkOutEl = $("#checkOut"), notesEl = $("#notes"), photoEl = $("#photo"), previewEl = $("#preview");
+    const themeBtn = $("#themeBtn"), exportBtn = $("#exportBtn"), importFile = $("#importFile");
+    const scanBtn = $("#scanBtn");
+    const scanDlg = $("#scanDlg"), video = $("#video"), overlay = $("#overlay"), closeScan = $("#closeScan"), flipCam = $("#flipCam");
+    const codeDlg = $("#codeDlg"), codeTitle = $("#codeTitle"), qrCanvas = $("#qrCanvas"), barSvg = $("#barSvg"),
+          printLbl = $("#printLbl"), dlPng = $("#dlPng"), closeCode = $("#closeCode");
+
+    /* -------------------- Tema -------------------- */
+    let theme = localStorage.getItem("theme") || "light";
+    document.body.dataset.theme = theme;
+    themeBtn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+    themeBtn.addEventListener("click", () => {
+      theme = (theme === "light") ? "dark" : "light";
+      document.body.dataset.theme = theme;
+      localStorage.setItem("theme", theme);
+      themeBtn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+    });
+
+    /* -------------------- Utils -------------------- */
+    const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString("no-NO") : "—";
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    const toDataURL = (file) => new Promise((resolve,reject) => {
+      const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file);
+    });
+    const normalizeReg = (s) => (s||"").trim().toUpperCase().replace(/\s+/g,"");
+    const byId = (id) => rows.find(x => x.id === id);
+
+    /* -------------------- Deep-link: #id=... / #reg=... -------------------- */
+    function handleHash(){
+      const h = new URLSearchParams(location.hash.slice(1));
+      const wantId = h.get("id"); const wantReg = (h.get("reg")||"").toUpperCase();
+      if (wantId){
+        const r = byId(wantId); if (r){ qEl.value = r.reg; render(); setTimeout(()=>scrollIntoView(r.id), 50); }
+      } else if (wantReg){
+        qEl.value = wantReg; render();
+      }
+    }
+    window.addEventListener("hashchange", handleHash);
+
+    /* -------------------- Søk/filtre/sort -------------------- */
+    qEl.addEventListener("input", render);
+    seasonEl.addEventListener("change", render);
+    statusEl.addEventListener("change", render);
+    sortEl.addEventListener("change", render);
+    clearFiltersBtn.addEventListener("click", () => { qEl.value = ""; seasonEl.value = ""; statusEl.value = ""; sortEl.value = "updated_desc"; render(); });
+
+    /* -------------------- Ny / Rediger -------------------- */
+    function openNew(){
+      $("#dlgTitle").textContent = "Ny registrering";
+      form.reset(); idEl.value = ""; previewEl.hidden = true; previewEl.src = "";
+      if (!checkInEl.value) checkInEl.value = todayISO();
+      dlg.showModal();
+    }
+    function openEdit(entry){
+      $("#dlgTitle").textContent = "Rediger";
+      idEl.value = entry.id;
+      customerEl.value = entry.customer || ""; phoneEl.value = entry.phone || ""; regEl.value = entry.reg || "";
+      brandEl.value = entry.brand || ""; sizeEl.value = entry.size || ""; seasonSel.value = entry.season || "sommer";
+      rimsEl.value = entry.rims || ""; locationEl.value = entry.location || ""; statusSel.value = entry.status || "inn";
+      checkInEl.value = entry.checkIn?.slice(0,10) || ""; checkOutEl.value = entry.checkOut?.slice(0,10) || ""; notesEl.value = entry.notes || "";
+      if (entry.photo){ previewEl.hidden = false; previewEl.src = entry.photo; } else { previewEl.hidden = true; previewEl.src = ""; }
+      dlg.showModal();
+    }
+    addBtn.addEventListener("click", openNew); fabBtn.addEventListener("click", openNew);
+    $("#cancel").addEventListener("click", () => dlg.close());
+
+    /* -------------------- Foto + komprimering -------------------- */
+    photoEl.addEventListener("change", async () => {
+      const f = photoEl.files?.[0]; if (!f){ previewEl.hidden = true; previewEl.src = ""; return; }
+      const dataUrl = await toDataURL(f);
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1200, maxH = 900;
+        const c = document.createElement("canvas");
+        let w = img.width, h = img.height, ratio = Math.min(maxW/w, maxH/h, 1);
+        c.width = Math.round(w*ratio); c.height = Math.round(h*ratio);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        const out = c.toDataURL("image/jpeg", .8);
+        previewEl.src = out; previewEl.hidden = false; previewEl.dataset.tmp = out;
+      };
+      img.src = dataUrl;
+    });
+
+    /* -------------------- Lagre -------------------- */
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const isNew = !idEl.value;
+      const entry = {
+        id: isNew ? DB.id() : idEl.value,
+        customer: customerEl.value.trim(),
+        phone: phoneEl.value.trim(),
+        reg: normalizeReg(regEl.value),
+        brand: brandEl.value.trim(),
+        size: sizeEl.value.trim(),
+        season: seasonSel.value,
+        rims: rimsEl.value,
+        location: locationEl.value.trim(),
+        status: statusSel.value,
+        checkIn: checkInEl.value ? new Date(checkInEl.value).toISOString() : null,
+        checkOut: checkOutEl.value ? new Date(checkOutEl.value).toISOString() : null,
+        notes: notesEl.value.trim(),
+        photo: previewEl.dataset.tmp || previewEl.src || null,
+        updatedAt: new Date().toISOString()
+      };
+      delete previewEl.dataset.tmp;
+
+      if (!entry.customer || !entry.reg || !entry.size){ alert("Fyll ut minst Kundenavn, Regnr og Dimensjon."); return; }
+
+      if (isNew){ rows.unshift(entry); } else { rows = rows.map(r => r.id === entry.id ? { ...r, ...entry } : r); }
+      DB.save(rows); dlg.close(); render();
+    });
+
+    /* -------------------- Handlinger -------------------- */
+    function toggleStatus(id){
+      const r = byId(id); if (!r) return;
+      if (r.status === "inn"){ r.status = "ut"; r.checkOut = r.checkOut || new Date().toISOString(); }
+      else { r.status = "inn"; r.checkIn = r.checkIn || new Date().toISOString(); }
+      r.updatedAt = new Date().toISOString();
+      rows = [r, ...rows.filter(x => x.id !== id)];
+      DB.save(rows); render();
+    }
+    function del(id){
+      if (!confirm("Slette denne registreringen?")) return;
+      rows = rows.filter(r => r.id !== id);
+      DB.save(rows); render();
+    }
+    function duplicate(id){
+      const r = byId(id); if (!r) return;
+      const copy = { ...r, id: DB.id(), updatedAt: new Date().toISOString(), reg: r.reg };
+      rows.unshift(copy); DB.save(rows); render();
+    }
+
+    /* -------------------- Koder (QR + strekkode) -------------------- */
+    function appBase(){
+      const { origin, pathname } = location;
+      return origin ? origin + pathname : "https://lokal.app/dekkhotell/index.html";
+    }
+    function entryURL(e){ return appBase() + "#id=" + encodeURIComponent(e.id); }
+    function openCodes(id){
+      const e = byId(id); if (!e) return;
+      codeTitle.textContent = `${e.reg} · ${e.size}`;
+      const qrText = entryURL(e);
+      QRCode.toCanvas(qrCanvas, qrText, { width: 512, margin: 2, color:{ dark:"#000000", light:"#ffffff" } });
+      barSvg.innerHTML = "";
+      JsBarcode(barSvg, e.id, { format: "CODE128", displayValue: true, text: e.reg, fontOptions:"bold", height: 80, margin: 10 });
+      dlPng.onclick = () => {
+        const a = document.createElement("a");
+        a.download = `dekk-${e.reg}-${e.id}.png`;
+        a.href = qrCanvas.toDataURL("image/png"); a.click();
+      };
+      printLbl.onclick = () => printLabel(e, qrCanvas.toDataURL("image/png"));
+      codeDlg.showModal();
+    }
+    const codeDlgClose = () => codeDlg.close();
+    closeCode.addEventListener("click", codeDlgClose);
+
+    function printLabel(e, qrDataURL){
+      const w = window.open("", "_blank");
+      w.document.write(`
+        <html><head><title>Etiketter</title>
+          <style>@media print{.label{width:80mm;height:40mm;border:1px solid #000;padding:6mm;display:flex;flex-direction:row;gap:6mm}
+          .labels{display:grid;grid-template-columns:1fr;gap:6mm;font:12px/1.2 system-ui}
+          img{height:28mm} .meta{display:flex;flex-direction:column;gap:2mm}</style></head>
+          <body><div class="labels">
+            <div class="label">
+              <img src="${qrDataURL}" alt="QR" />
+              <div class="meta">
+                <div><strong>${e.reg}</strong> · ${e.size}</div>
+                <div>${e.customer || ""}</div>
+                <div>${e.location || ""}</div>
+                <div>ID: ${e.id.slice(0,8)}…</div>
+              </div>
+            </div>
+          </div></body></html>
+      `);
+      w.document.close(); w.focus(); w.print();
+    }
+
+    /* -------------------- Skanning (kamera) -------------------- */
+    let codeReader, currentDeviceId = null;
+    async function openScanner(){
+      codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+      scanDlg.showModal();
+      const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+      const back = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
+      currentDeviceId = back?.deviceId || undefined;
+      startDecode();
+    }
+    async function startDecode(){
+      try{
+        await codeReader.decodeFromVideoDevice(currentDeviceId, video, (result, err, controls) => {
+          if (result){
+            controls.stop();
+            handleScanResult(result.getText());
+          }
+        });
+      } catch(e){ alert("Kunne ikke starte kamera: " + e.message + "\nHint: Krever HTTPS (GitHub Pages/Netlify) eller CodePen/Replit."); }
+    }
+    function stopDecode(){ try{ codeReader?.reset(); } catch{} }
+    function handleScanResult(text){
+      let id = null;
+      try{
+        const u = new URL(text);
+        const h = new URLSearchParams(u.hash.slice(1));
+        id = h.get("id");
+      }catch{}
+      if (!id){
+        if (/^id-|[0-9a-f-]{8,}$/.test(text)) id = text.trim();
+      }
+      if (!id){ alert("Leste kode, men fant ikke gyldig ID/URL:\n" + text); closeScan.click(); return; }
+      const e = byId(id);
+      if (!e){ alert("Fant ikke registrering for ID: " + id); closeScan.click(); return; }
+      location.hash = "id=" + encodeURIComponent(id);
+      render();
+      setTimeout(()=>scrollIntoView(id), 60);
+      closeScan.click();
+    }
+    function scrollIntoView(id){
+      const el = document.querySelector('[data-id="'+id+'"]');
+      if (el){ el.scrollIntoView({behavior:"smooth",block:"center"}); el.style.outline="2px solid var(--brand)"; setTimeout(()=>el.style.outline="none",1500); }
+    }
+    const openScan = () => openScanner();
+    document.getElementById("scanBtn").addEventListener("click", openScan);
+    document.getElementById("closeScan").addEventListener("click", () => { stopDecode(); scanDlg.close(); });
+    document.getElementById("flipCam").addEventListener("click", async () => {
+      const devs = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+      if (!devs.length) return;
+      const idx = devs.findIndex(d=>d.deviceId===currentDeviceId);
+      const next = devs[(idx+1)%devs.length]; currentDeviceId = next.deviceId; stopDecode(); startDecode();
+    });
+
+    /* -------------------- Eksport/Import -------------------- */
+    exportBtn.addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "dekkhotell-backup-" + new Date().toISOString().slice(0,10) + ".json";
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+    importFile.addEventListener("change", async () => {
+      const f = importFile.files?.[0]; if (!f) return;
+      const text = await f.text();
+      try{
+        const data = JSON.parse(text);
+        if (!Array.isArray(data)) throw new Error("Feil format");
+        const cleaned = data.map(x => ({
+          id: x.id || DB.id(), customer: x.customer || "", phone: x.phone || "", reg: normalizeReg(x.reg || ""),
+          brand: x.brand || "", size: x.size || "", season: x.season || "", rims: x.rims || "", location: x.location || "",
+          status: x.status || "inn", checkIn: x.checkIn || null, checkOut: x.checkOut || null, notes: x.notes || "",
+          photo: x.photo || null, updatedAt: x.updatedAt || new Date().toISOString()
+        }));
+        rows = cleaned; DB.save(rows); render(); alert("Importert " + rows.length + " rader ✔️");
+      } catch(err){ alert("Kunne ikke importere: " + err.message); }
+      finally { importFile.value = ""; }
+    });
+
+    /* -------------------- Rendering -------------------- */
+    function matches(r){
+      const q = qEl.value.trim().toLowerCase();
+      const qOk = !q || [r.customer, r.phone, r.reg, r.brand, r.size, r.rims, r.location, r.notes].some(v => (v||"").toLowerCase().includes(q));
+      const seasonOk = !seasonEl.value || r.season === seasonEl.value;
+      const statusOk = !statusEl.value || r.status === statusEl.value;
+      return qOk && seasonOk && statusOk;
+    }
+    function sortRows(a,b){
+      switch (sortEl.value){
+        case "updated_asc": return (a.updatedAt||"").localeCompare(b.updatedAt||"");
+        case "reg_asc": return (a.reg||"").localeCompare(b.reg||"");
+        case "name_asc": return (a.customer||"").localeCompare(b.customer||"");
+        default: return (b.updatedAt||"").localeCompare(a.updatedAt||"");
+      }
+    }
+    function badge(text, cls){ const b = document.createElement("span"); b.className = "badge " + (cls||""); b.textContent = text; return b; }
+    function button(text, cls, on){ const b = document.createElement("button"); b.className = cls||""; b.textContent = text; b.addEventListener("click", on); return b; }
+
+    function render(){
+      const filtered = rows.filter(matches).sort(sortRows);
+      listEl.innerHTML = ""; emptyEl.hidden = filtered.length > 0;
+
+      for (const r of filtered){
+        const card = document.createElement("article"); card.className = "card"; card.dataset.id = r.id;
+        const title = document.createElement("h3"); title.textContent = (r.reg || "Uten regnr") + " — " + (r.size || "");
+        const line2 = document.createElement("div"); line2.className = "row";
+        line2.append(badge(r.status === "inn" ? "INN" : "UT", r.status === "inn" ? "ok" : "danger"),
+                     badge(r.season || "—"), r.rims ? badge(r.rims) : badge("felg ukjent","gray"),
+                     r.brand ? badge(r.brand) : badge("merke ukjent","gray"));
+        const line3 = document.createElement("div"); line3.className = "meta";
+        line3.textContent = (r.customer || "Ukjent kunde") + (r.phone ? " · " + r.phone : "") + (r.location ? " · " + r.location : "");
+        const dates = document.createElement("div"); dates.className = "meta";
+        dates.textContent = "Inn: " + fmtDate(r.checkIn) + " · Ut: " + fmtDate(r.checkOut) + " · Oppdatert: " + fmtDate(r.updatedAt);
+        const notes = document.createElement("div"); notes.className = "meta"; notes.textContent = r.notes || "";
+        const actions = document.createElement("div"); actions.className = "actions";
+        const btnEdit = button("✏️ Rediger","ghost", () => openEdit(r));
+        const btnToggle = button(r.status === "inn" ? "⤴️ Marker UT" : "⤵️ Marker INN", r.status === "inn" ? "danger" : "ok", () => toggleStatus(r.id));
+        const btnCopy = button("📄 Dupliser","ghost", () => duplicate(r.id));
+        const btnCode = button("🏷️ Koder","ghost", () => openCodes(r.id));
+        const btnDel = button("🗑️ Slett","danger", () => del(r.id));
+        actions.append(btnEdit, btnToggle, btnCopy, btnCode, btnDel);
+
+        card.append(title, line2, line3, dates);
+        if (r.photo){ const img = document.createElement("img"); img.src = r.photo; img.alt = "Bilde av dekk"; img.className = "photo"; card.append(img); }
+        if (r.notes) card.append(notes);
+        card.append(actions);
+        listEl.append(card);
+      }
+    }
+
+    /* -------------------- Init + snarveier -------------------- */
+    render();
+    handleHash();
+    window.addEventListener("keydown", (e) => { if (e.key === "/" && document.activeElement !== qEl){ e.preventDefault(); qEl.focus(); } });
+
+    /* -------------------- Service Worker registrering (PWA) -------------------- */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(r => console.log('SW registrert:', r.scope))
+          .catch(err => console.warn('SW feilet:', err));
+      });
+    }
+
+    // iOS hint
+    console.log("Tips: Safari → Del → Legg til på Hjem-skjerm. Skanning krever HTTPS (GitHub Pages/Netlify).");
+  </script>
+</body>
+</html>
