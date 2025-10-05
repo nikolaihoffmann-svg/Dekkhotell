@@ -12,13 +12,15 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;transition:background .2s ease,color .2s ease}
+
+/* Header */
 header{background:var(--card);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--border);box-shadow:var(--shadow);position:sticky;top:0;z-index:10}
 .brand{display:flex;align-items:center;gap:8px}
 .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--accent))}
 .title{font-weight:800}
 .tools{display:flex;align-items:center;gap:8px}
-input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;width:min(420px,58vw)}
-.btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer}
+input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;width:min(420px,50vw)}
+.btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer;transition:.15s}
 .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
 .btn:hover{background:color-mix(in oklab,var(--brand) 14%,transparent)}
 main{flex:1;padding:14px}
@@ -53,7 +55,10 @@ label{font-size:.9rem;color:var(--muted)}
 input,textarea{width:100%;padding:8px 10px;margin-top:4px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text)}
 textarea{resize:vertical;min-height:70px}
 form .actions{grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px}
-@media(max-width:640px){input[type="search"]{width:52vw}form{grid-template-columns:1fr}}
+
+/* Flytende + Ny knapp */
+.fab{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--brand);color:#fff;border:none;border-radius:999px;padding:14px 16px;font-weight:700;box-shadow:var(--shadow)}
+@media(max-width:640px){input[type="search"]{width:48vw}}
 </style>
 </head>
 
@@ -69,6 +74,8 @@ form .actions{grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:
 
 <main id="list"></main>
 <div id="empty" class="empty" hidden>Ingen treff …</div>
+
+<button id="fab" class="fab">+ Ny</button>
 
 <!-- Ny/Rediger -->
 <dialog id="editDlg">
@@ -91,7 +98,7 @@ form .actions{grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:
 </dialog>
 
 <script>
-/* ------------ Tema-bryter (fikset) ------------ */
+/* Tema-bryter */
 (function(){
   const key='dekk.theme';
   const btn=document.getElementById('themeBtn');
@@ -105,7 +112,7 @@ form .actions{grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:
   });
 })();
 
-/* ------------ Data & lagring ------------ */
+/* Data */
 let rows = JSON.parse(localStorage.getItem('dekk.rows')||'[]');
 if(!rows.length){
   rows = [
@@ -117,23 +124,23 @@ if(!rows.length){
 }
 const save=()=>localStorage.setItem('dekk.rows', JSON.stringify(rows));
 
-/* ------------ Elementer ------------ */
+/* Elms */
 const listEl=document.getElementById('list');
 const emptyEl=document.getElementById('empty');
 const searchEl=document.getElementById('search');
 const newBtn=document.getElementById('newBtn');
+const fab=document.getElementById('fab');
 const editDlg=document.getElementById('editDlg');
 const editForm=document.getElementById('editForm');
 const dlgTitle=document.getElementById('dlgTitle');
 let editTarget=null;
 
-/* ------------ Hjelpere ------------ */
+/* Helpers */
 const fmt=(d)=>!d?'-':new Date(d).toLocaleDateString('no-NO');
 const matches=(r)=>{const q=searchEl.value.trim().toLowerCase(); if(!q) return true;
   return [r.reg,r.customer,r.size,r.brand,r.location].some(v=>(v||'').toLowerCase().includes(q));};
 searchEl.addEventListener('input', render);
 
-/* expand helpers */
 function slideDown(el){el.hidden=false;el.style.maxHeight='0px';el.style.transition='max-height .2s ease';
   requestAnimationFrame(()=>{el.style.maxHeight=el.scrollHeight+'px';});
   el.addEventListener('transitionend',()=>{el.style.maxHeight='';el.style.transition='';},{once:true});}
@@ -141,7 +148,7 @@ function slideUp(el){el.style.maxHeight=el.scrollHeight+'px';el.style.transition
   requestAnimationFrame(()=>{el.style.maxHeight='0px';});
   el.addEventListener('transitionend',()=>{el.hidden=true;el.style.maxHeight='';el.style.transition='';},{once:true});}
 
-/* ------------ Render kompaktliste ------------ */
+/* Render */
 function render(){
   const filtered=rows.filter(matches);
   listEl.innerHTML=''; emptyEl.hidden = filtered.length>0;
@@ -180,17 +187,16 @@ function render(){
   }
 }
 
-/* ------------ Ny / Rediger ------------ */
+/* Ny/Rediger */
 function openEdit(r){
   editTarget = r || null;
   dlgTitle.textContent = r ? 'Rediger registrering' : 'Ny registrering';
-  // nullstill
   editForm.reset();
-  // fyll hvis redigering
   if(r){ for(const el of editForm.elements){ if(el.name && r[el.name]!=null) el.value = r[el.name]; } }
   editDlg.showModal();
 }
 newBtn.addEventListener('click', ()=> openEdit(null));
+fab.addEventListener('click', ()=> openEdit(null));
 document.getElementById('cancelEdit').addEventListener('click', ()=> editDlg.close());
 
 editForm.addEventListener('submit',(e)=>{
