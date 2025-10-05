@@ -4,66 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dekkhotell</title>
-
 <style>
-/* ---------- Temaer ---------- */
-:root{--bg:#0c1016;--card:#151b24;--text:#f3f3f3;--muted:#9ca3af;--brand:#3a6df0;
---ok:#24d65f;--danger:#ef4444;--border:#1e2633;--accent:#2ec4b6;--shadow:0 2px 6px rgba(0,0,0,.35);}
-@media(prefers-color-scheme:light){:root[data-theme="auto"]{--bg:#f6f8fb;--card:#fff;--text:#0b0f14;--muted:#475569;
---brand:#2463eb;--ok:#16a34a;--danger:#e11d48;--border:#e7eef6;--accent:#0ea5a0;--shadow:0 2px 10px rgba(16,24,40,.08);}}
-:root[data-theme="light"]{@media(all){--bg:#f6f8fb;--card:#fff;--text:#0b0f14;--muted:#475569;
---brand:#2463eb;--ok:#16a34a;--danger:#e11d48;--border:#e7eef6;--accent:#0ea5a0;--shadow:0 2px 10px rgba(16,24,40,.08);}}
-:root[data-theme="dark"]{@media(all){--bg:#0c1016;--card:#151b24;--text:#f3f3f3;--muted:#9ca3af;
---brand:#3a6df0;--ok:#24d65f;--danger:#ef4444;--border:#1e2633;--accent:#2ec4b6;--shadow:0 2px 6px rgba(0,0,0,.35);}}
+:root{--bg:#0c1016;--card:#151b24;--text:#f3f3f3;--muted:#9ca3af;--brand:#3a6df0;--ok:#24d65f;--danger:#ef4444;--border:#1e2633;--accent:#2ec4b6;--shadow:0 2px 6px rgba(0,0,0,.35)}
+@media(prefers-color-scheme:light){:root[data-theme="auto"]{--bg:#f6f8fb;--card:#fff;--text:#0b0f14;--muted:#475569;--brand:#2463eb;--ok:#16a34a;--danger:#e11d48;--border:#e7eef6;--accent:#0ea5a0;--shadow:0 2px 10px rgba(16,24,40,.08)}}
+:root[data-theme="light"]{--bg:#f6f8fb;--card:#fff;--text:#0b0f14;--muted:#475569;--brand:#2463eb;--ok:#16a34a;--danger:#e11d48;--border:#e7eef6;--accent:#0ea5a0;--shadow:0 2px 10px rgba(16,24,40,.08)}
+:root[data-theme="dark"]{--bg:#0c1016;--card:#151b24;--text:#f3f3f3;--muted:#9ca3af;--brand:#3a6df0;--ok:#24d65f;--danger:#ef4444;--border:#1e2633;--accent:#2ec4b6;--shadow:0 2px 6px rgba(0,0,0,.35)}
 
-/* ---------- Base ---------- */
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;
-display:flex;flex-direction:column;min-height:100vh;transition:background .2s ease,color .2s ease}
-header{background:var(--card);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;
-box-shadow:var(--shadow);position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border);}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;transition:background .2s ease,color .2s ease}
+header{background:var(--card);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--border);box-shadow:var(--shadow);position:sticky;top:0;z-index:10}
 .brand{display:flex;align-items:center;gap:8px}
 .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--accent))}
-.title{font-weight:700}
-header .tools{display:flex;align-items:center;gap:8px}
-input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);
-border-radius:8px;padding:8px 10px;min-width:180px}
-.btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:7px 12px;cursor:pointer}
-.btn:hover{background:color-mix(in oklab,var(--brand) 15%,transparent)}
+.title{font-weight:800}
+.tools{display:flex;align-items:center;gap:8px}
+input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;width:min(420px,58vw)}
+.btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn:hover{background:color-mix(in oklab,var(--brand) 14%,transparent)}
 main{flex:1;padding:14px}
 
-/* ---------- Kort ---------- */
-.card.compact{background:var(--card);padding:10px 14px;border-radius:12px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border)}
-.card.compact.open{background:color-mix(in oklab,var(--brand) 6%,var(--card))}
+/* kompaktliste */
+.card.compact{background:var(--card);padding:10px 14px;border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);transition:background .2s ease,border-color .2s ease}
+.card.compact.open{background:color-mix(in oklab,var(--brand) 6%,var(--card));border-color:color-mix(in oklab,var(--brand) 28%,var(--border))}
 .card.compact .mainline{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.card.compact .left{display:flex;align-items:center;gap:6px;min-width:0}
-.card.compact .reg{font-weight:700}
+.card.compact .left{display:flex;align-items:center;gap:8px;min-width:0}
+.card.compact .reg{font-weight:800}
 .card.compact .right{display:flex;align-items:center;gap:8px}
-.card.compact .chev{display:inline-block;transition:transform .2s ease}
+.badge{padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid var(--border)}
+.ok{background:color-mix(in oklab,var(--ok) 40%,transparent);color:#06260f;border-color:color-mix(in oklab,var(--ok) 60%,var(--border))}
+.danger{background:color-mix(in oklab,var(--danger) 28%,transparent);color:#3b0b0b;border-color:color-mix(in oklab,var(--danger) 55%,var(--border))}
+.card.compact .chev{display:inline-block;transition:transform .2s ease;opacity:.9}
 .card.compact.open .chev{transform:rotate(180deg)}
-.card.compact .details{border-top:1px solid var(--border);margin-top:6px;padding-top:6px;font-size:.9rem}
-.badge{padding:3px 7px;border-radius:6px;font-size:.8rem}
-.ok{background:var(--ok);color:#000}.danger{background:var(--danger);color:#fff}
+.card.compact .details{border-top:1px solid var(--border);margin-top:6px;padding-top:6px;font-size:.95rem;overflow:hidden}
 .meta{color:var(--muted);margin-top:3px}
-.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.actions button{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:8px;padding:5px 9px;font-size:.85rem}
-.actions .ok{background:var(--ok);color:#000}.actions .danger{background:var(--danger);color:#fff}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.actions button{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:8px;padding:6px 10px;font-size:.85rem}
+.actions .ok{background:var(--ok);border-color:var(--ok);color:#06260f}
+.actions .danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.empty{color:var(--muted);text-align:center;margin-top:16px}
 
-/* ---------- Dialog ---------- */
-dialog{border:none;border-radius:12px;padding:20px 24px;background:var(--card);color:var(--text);
-max-width:420px;width:90%;box-shadow:var(--shadow);animation:fadeIn .25s ease}
-@keyframes fadeIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-dialog::backdrop{background:rgba(0,0,0,.5)}
-form{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-form label{font-weight:600}
-form input, form textarea{width:100%;padding:8px 10px;border:1px solid var(--border);
-border-radius:8px;background:transparent;color:var(--text)}
-form textarea{resize:vertical;min-height:60px}
-form .row{display:flex;gap:10px}
-form button{margin-top:4px}
-
-/* ---------- Empty ---------- */
-.empty{text-align:center;color:var(--muted);margin-top:20px}
+/* dialog */
+dialog{border:none;border-radius:12px;padding:18px 20px;background:var(--card);color:var(--text);max-width:460px;width:92%;box-shadow:var(--shadow);animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+form .row-2{grid-column:1/-1}
+label{font-size:.9rem;color:var(--muted)}
+input,textarea{width:100%;padding:8px 10px;margin-top:4px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text)}
+textarea{resize:vertical;min-height:70px}
+form .actions{grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px}
+@media(max-width:640px){input[type="search"]{width:52vw}form{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -71,118 +61,158 @@ form button{margin-top:4px}
 <header>
   <div class="brand"><div class="logo"></div><div class="title">Dekkhotell</div></div>
   <div class="tools">
-    <button id="themeBtn" class="btn">🌞/🌙</button>
+    <button id="themeBtn" class="btn" title="Bytt tema">🌞/🌙</button>
     <input id="search" type="search" placeholder="Søk regnr, navn…" />
+    <button id="newBtn" class="btn primary">+ Ny</button>
   </div>
 </header>
 
 <main id="list"></main>
-<p id="empty" class="empty">Ingen treff …</p>
+<div id="empty" class="empty" hidden>Ingen treff …</div>
 
-<!-- Rediger-dialog -->
+<!-- Ny/Rediger -->
 <dialog id="editDlg">
-  <h2>Rediger kunde / dekk</h2>
+  <h2 id="dlgTitle">Ny registrering</h2>
   <form id="editForm">
-    <label>Registreringsnummer<input name="reg"></label>
-    <label>Kundenavn<input name="customer"></label>
-    <label>Telefon<input name="phone"></label>
-    <label>Plassering<input name="location"></label>
-    <div class="row">
-      <label>Merke<input name="brand"></label>
-      <label>Størrelse<input name="size"></label>
-    </div>
-    <div class="row">
-      <label>Felg<input name="rims"></label>
-      <label>Sesong<input name="season"></label>
-    </div>
-    <label>Notater<textarea name="notes"></textarea></label>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+    <div><label>Regnr<input name="reg" required></label></div>
+    <div><label>Kunde<input name="customer"></label></div>
+    <div><label>Telefon<input name="phone"></label></div>
+    <div><label>Plassering<input name="location"></label></div>
+    <div><label>Merke<input name="brand"></label></div>
+    <div><label>Størrelse<input name="size"></label></div>
+    <div><label>Felg<input name="rims"></label></div>
+    <div><label>Sesong<input name="season"></label></div>
+    <div class="row-2"><label>Notater<textarea name="notes"></textarea></label></div>
+    <div class="actions">
       <button type="button" id="cancelEdit" class="btn">Avbryt</button>
-      <button type="submit" class="btn primary" style="background:var(--brand);color:#fff;border:none;">Lagre</button>
+      <button type="submit" class="btn primary" style="background:var(--brand);color:#fff;border-color:var(--brand)">Lagre</button>
     </div>
   </form>
 </dialog>
 
 <script>
-/* ---------- Tema ---------- */
+/* ------------ Tema-bryter (fikset) ------------ */
 (function(){
-  const key='dekk.theme'; const btn=document.getElementById('themeBtn');
-  const set=(v)=>{document.documentElement.setAttribute('data-theme',v);localStorage.setItem(key,v);
-    btn.textContent=v==='dark'?'🌙':(v==='light'?'🌞':'🌞/🌙');}
-  const cur=localStorage.getItem(key)||'auto'; set(cur);
-  btn.onclick=()=>{set(cur==='auto'?'dark':(cur==='dark'?'light':'auto'));}
+  const key='dekk.theme';
+  const btn=document.getElementById('themeBtn');
+  function setTheme(v){ document.documentElement.setAttribute('data-theme',v); localStorage.setItem(key,v);
+    btn.textContent = v==='dark'?'🌙' : (v==='light'?'🌞' : '🌞/🌙'); }
+  setTheme(localStorage.getItem(key)||'auto');
+  btn.addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme')||'auto';
+    const next = cur==='auto' ? 'dark' : (cur==='dark' ? 'light' : 'auto');
+    setTheme(next);
+  });
 })();
 
-/* ---------- Data ---------- */
-let rows=JSON.parse(localStorage.getItem('dekk.rows')||'[]');
+/* ------------ Data & lagring ------------ */
+let rows = JSON.parse(localStorage.getItem('dekk.rows')||'[]');
 if(!rows.length){
-  rows=[{id:'1',reg:'FT31184',customer:'Ola Nordmann',phone:'90012345',location:'Hylle A1',brand:'Michelin',
-  size:'205/55 R16',rims:'Alu',season:'Sommer',notes:'God stand',status:'inn',checkIn:'2025-03-10',checkOut:''}];
+  rows = [
+    {id:crypto.randomUUID?.()||'1',reg:'FT31184',customer:'Ola Nordmann',phone:'90012345',location:'Hylle A1',
+     brand:'Michelin',size:'205/55 R16',rims:'Alu',season:'Sommer',notes:'God stand',status:'inn',
+     checkIn:'2025-03-10',checkOut:'',updatedAt:new Date().toISOString()}
+  ];
+  localStorage.setItem('dekk.rows', JSON.stringify(rows));
 }
-const save=()=>localStorage.setItem('dekk.rows',JSON.stringify(rows));
+const save=()=>localStorage.setItem('dekk.rows', JSON.stringify(rows));
 
-/* ---------- Elementer ---------- */
-const listEl=document.getElementById('list'),emptyEl=document.getElementById('empty'),
-searchEl=document.getElementById('search'),editDlg=document.getElementById('editDlg'),
-editForm=document.getElementById('editForm');
+/* ------------ Elementer ------------ */
+const listEl=document.getElementById('list');
+const emptyEl=document.getElementById('empty');
+const searchEl=document.getElementById('search');
+const newBtn=document.getElementById('newBtn');
+const editDlg=document.getElementById('editDlg');
+const editForm=document.getElementById('editForm');
+const dlgTitle=document.getElementById('dlgTitle');
 let editTarget=null;
 
-/* ---------- Utils ---------- */
+/* ------------ Hjelpere ------------ */
 const fmt=(d)=>!d?'-':new Date(d).toLocaleDateString('no-NO');
-const matches=(r)=>!searchEl.value||[r.reg,r.customer].some(v=>(v||'').toLowerCase().includes(searchEl.value.toLowerCase()));
-searchEl.oninput=()=>render();
+const matches=(r)=>{const q=searchEl.value.trim().toLowerCase(); if(!q) return true;
+  return [r.reg,r.customer,r.size,r.brand,r.location].some(v=>(v||'').toLowerCase().includes(q));};
+searchEl.addEventListener('input', render);
 
-/* ---------- Expand helpers ---------- */
+/* expand helpers */
 function slideDown(el){el.hidden=false;el.style.maxHeight='0px';el.style.transition='max-height .2s ease';
-requestAnimationFrame(()=>{el.style.maxHeight=el.scrollHeight+'px';});
-el.addEventListener('transitionend',()=>{el.style.maxHeight='';el.style.transition='';},{once:true});}
+  requestAnimationFrame(()=>{el.style.maxHeight=el.scrollHeight+'px';});
+  el.addEventListener('transitionend',()=>{el.style.maxHeight='';el.style.transition='';},{once:true});}
 function slideUp(el){el.style.maxHeight=el.scrollHeight+'px';el.style.transition='max-height .2s ease';
-requestAnimationFrame(()=>{el.style.maxHeight='0px';});
-el.addEventListener('transitionend',()=>{el.hidden=true;el.style.maxHeight='';el.style.transition='';},{once:true});}
+  requestAnimationFrame(()=>{el.style.maxHeight='0px';});
+  el.addEventListener('transitionend',()=>{el.hidden=true;el.style.maxHeight='';el.style.transition='';},{once:true});}
 
-/* ---------- Render ---------- */
+/* ------------ Render kompaktliste ------------ */
 function render(){
   const filtered=rows.filter(matches);
-  listEl.innerHTML=''; emptyEl.hidden=filtered.length>0;
+  listEl.innerHTML=''; emptyEl.hidden = filtered.length>0;
+
   for(const r of filtered){
-    const card=document.createElement('article');card.className='card compact';
-    const head=document.createElement('div');head.className='row mainline';
-    head.innerHTML=`<div class="left">🚗 <span class="reg">${r.reg}</span> · ${r.customer||''}</div>
+    const card=document.createElement('article'); card.className='card compact'; card.dataset.id=r.id;
+
+    const header=document.createElement('div'); header.className='row mainline';
+    header.innerHTML=`
+      <div class="left">🚗 <span class="reg">${r.reg||'Ukjent'}</span> · ${r.customer||''}</div>
       <div class="right"><span class="muted">${r.size||''}</span>
-      <span class="badge ${r.status==='inn'?'ok':'danger'}">${r.status==='inn'?'INN':'UT'}</span><span class="chev">▾</span></div>`;
-    const det=document.createElement('div');det.className='details';det.hidden=true;
-    det.innerHTML=`<div class="meta">📞 ${r.phone||'-'} · 📍 ${r.location||'-'}</div>
+        <span class="badge ${r.status==='inn'?'ok':'danger'}">${r.status==='inn'?'INN':'UT'}</span>
+        <span class="chev">▾</span></div>`;
+
+    const details=document.createElement('div'); details.className='details'; details.hidden=true;
+    details.innerHTML=`
+      <div class="meta">📞 ${r.phone||'-'} · 📍 ${r.location||'-'}</div>
       <div class="meta">🛞 ${r.season||'-'} · ${r.brand||'-'} · Felg: ${r.rims||'-'}</div>
-      <div class="meta">${r.notes?('📝 '+r.notes):''}</div>
+      <div class="meta">Oppdatert: ${fmt(r.updatedAt)}</div>
+      ${r.notes?`<div class="meta">📝 ${r.notes}</div>`:''}
       <div class="actions">
         <button class="ghost edit">✏️ Rediger</button>
         <button class="${r.status==='inn'?'danger':'ok'} toggle">${r.status==='inn'?'⤴️ Marker UT':'⤵️ Marker INN'}</button>
         <button class="danger del">🗑️ Slett</button>
       </div>`;
-    head.onclick=()=>{const open=!det.hidden;if(open){slideUp(det);card.classList.remove('open');}
-    else{slideDown(det);card.classList.add('open');}};
-    det.querySelector('.toggle').onclick=(e)=>{e.stopPropagation();r.status=r.status==='inn'?'ut':'inn';save();render();}
-    det.querySelector('.del').onclick=(e)=>{e.stopPropagation();if(confirm('Slette denne?')){rows=rows.filter(x=>x.id!==r.id);save();render();}}
-    det.querySelector('.edit').onclick=(e)=>{e.stopPropagation();openEdit(r);}
-    card.append(head,det);listEl.append(card);
+
+    header.addEventListener('click',()=>{ const open=!details.hidden; if(open){slideUp(details);card.classList.remove('open');} else {slideDown(details);card.classList.add('open');} });
+
+    details.querySelector('.toggle').addEventListener('click',(e)=>{e.stopPropagation();
+      r.status = r.status==='inn'?'ut':'inn'; r.updatedAt=new Date().toISOString(); save(); render();});
+    details.querySelector('.del').addEventListener('click',(e)=>{e.stopPropagation();
+      if(confirm('Slette denne?')){ rows = rows.filter(x=>x.id!==r.id); save(); render(); }});
+    details.querySelector('.edit').addEventListener('click',(e)=>{e.stopPropagation(); openEdit(r); });
+
+    card.append(header,details); listEl.append(card);
   }
 }
 
-/* ---------- Rediger ---------- */
+/* ------------ Ny / Rediger ------------ */
 function openEdit(r){
-  editTarget=r;
-  for(const [k,v] of Object.entries(r)) if(editForm[k]) editForm[k].value=v||'';
+  editTarget = r || null;
+  dlgTitle.textContent = r ? 'Rediger registrering' : 'Ny registrering';
+  // nullstill
+  editForm.reset();
+  // fyll hvis redigering
+  if(r){ for(const el of editForm.elements){ if(el.name && r[el.name]!=null) el.value = r[el.name]; } }
   editDlg.showModal();
 }
-editForm.onsubmit=(e)=>{
+newBtn.addEventListener('click', ()=> openEdit(null));
+document.getElementById('cancelEdit').addEventListener('click', ()=> editDlg.close());
+
+editForm.addEventListener('submit',(e)=>{
   e.preventDefault();
+  const data = Object.fromEntries(new FormData(editForm).entries());
+  data.reg = (data.reg||'').trim().toUpperCase();
+
   if(editTarget){
-    for(const el of editForm.elements) if(el.name) editTarget[el.name]=el.value;
-    editTarget.updatedAt=new Date().toISOString();
+    Object.assign(editTarget, data, { updatedAt:new Date().toISOString() });
+  }else{
+    const row = {
+      id: crypto.randomUUID?.() || ('id-'+Date.now()),
+      ...data,
+      status:'inn',
+      checkIn:new Date().toISOString(),
+      checkOut:'',
+      updatedAt:new Date().toISOString()
+    };
+    rows.unshift(row);
   }
-  save();render();editDlg.close();
-}
-document.getElementById('cancelEdit').onclick=()=>editDlg.close();
+  save(); editDlg.close(); render();
+});
 
 render();
 </script>
