@@ -19,8 +19,9 @@ header{background:var(--card);padding:10px 14px;display:flex;justify-content:spa
 .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--accent))}
 .title{font-weight:800}
 .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;width:min(360px,48vw)}
+input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;width:min(360px,46vw)}
 .counter{color:var(--muted);font-size:.9rem}
+select{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 10px}
 .btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer;transition:.15s}
 .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
 .btn:hover{background:color-mix(in oklab,var(--brand) 14%,transparent)}
@@ -64,7 +65,7 @@ form .actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-conte
 
 /* Flytende + Ny knapp */
 .fab{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--brand);color:#fff;border:none;border-radius:999px;padding:14px 16px;font-weight:700;box-shadow:var(--shadow)}
-@media(max-width:640px){input[type="search"]{width:46vw}}
+@media(max-width:640px){input[type="search"]{width:44vw}}
 </style>
 </head>
 
@@ -75,6 +76,20 @@ form .actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-conte
     <button id="themeBtn" class="btn" title="Bytt tema">🌞/🌙</button>
     <input id="search" type="search" placeholder="Søk regnr, navn…" />
     <span id="count" class="counter"></span>
+
+    <!-- 🔽 Preset-velger for etiketter -->
+    <select id="labelPreset" title="Etikett-format">
+      <option value="A4-50x30" selected>A4 – 50×30 mm (3 kol)</option>
+      <option value="DYMO-99012">DYMO 99012 – 89×28 mm</option>
+      <option value="DYMO-11354">DYMO 11354 – 57×32 mm</option>
+      <option value="DYMO-99014">DYMO 99014 – 101×54 mm</option>
+      <option value="BRO-DK11209">Brother DK-11209 – 62×29 mm</option>
+      <option value="BRO-DK11201">Brother DK-11201 – 90×29 mm</option>
+      <option value="BRO-DK11208">Brother DK-11208 – 90×38 mm</option>
+      <option value="BRO-DK22205">Brother DK-22205 – 62 mm rull (kontinuerlig)</option>
+    </select>
+
+    <button id="printBtn" class="btn">🏷️ Etiketter</button>
     <button id="exportBtn" class="btn">📤 Eksporter</button>
     <button id="importBtn" class="btn">📥 Importer</button>
     <input id="importFile" type="file" accept="application/json" hidden>
@@ -162,11 +177,13 @@ const listEl=document.getElementById('list');
 const emptyEl=document.getElementById('empty');
 const countEl=document.getElementById('count');
 const searchEl=document.getElementById('search');
+const labelPresetEl=document.getElementById('labelPreset');
 const newBtn=document.getElementById('newBtn');
 const fab=document.getElementById('fab');
 const exportBtn=document.getElementById('exportBtn');
 const importBtn=document.getElementById('importBtn');
 const importFile=document.getElementById('importFile');
+const printBtn=document.getElementById('printBtn');
 
 const editDlg=document.getElementById('editDlg');
 const editForm=document.getElementById('editForm');
@@ -227,7 +244,7 @@ function render(){
   }
 }
 
-/* Ny/Rediger */
+/* Ny/Rediger + hurtigvalg */
 function openEdit(r){
   editTarget = r || null;
   dlgTitle.textContent = r ? 'Rediger registrering' : 'Ny registrering';
@@ -235,12 +252,9 @@ function openEdit(r){
   if(r){ for(const el of editForm.elements){ if(el.name && r[el.name]!=null) el.value = r[el.name]; } }
   editDlg.showModal();
 
-  // Hurtigvalgkobling
   setupQuickFill('rimsQuick','rimsInput');
   setupQuickFill('seasonQuick','seasonInput');
 }
-
-/* Hurtigvalg for Felg og Sesong */
 function setupQuickFill(boxId, inputId){
   const box=document.getElementById(boxId);
   const input=document.getElementById(inputId);
@@ -249,28 +263,21 @@ function setupQuickFill(boxId, inputId){
     btn.onclick=()=>{ input.value=btn.textContent; input.focus(); };
   });
 }
-
 document.getElementById('cancelEdit').addEventListener('click', ()=> editDlg.close());
 document.getElementById('newBtn').addEventListener('click', ()=> openEdit(null));
 document.getElementById('fab').addEventListener('click', ()=> openEdit(null));
-
 editForm.addEventListener('submit',(e)=>{
   e.preventDefault();
   const data = Object.fromEntries(new FormData(editForm).entries());
   data.reg = (data.reg||'').trim().toUpperCase();
-
-  if(editTarget){
-    Object.assign(editTarget, data, { updatedAt:new Date().toISOString() });
-  }else{
-    const row = {
+  if(editTarget){ Object.assign(editTarget, data, { updatedAt:new Date().toISOString() }); }
+  else{
+    rows.unshift({
       id: crypto.randomUUID?.() || ('id-'+Date.now()),
-      ...data,
-      status:'inn',
-      checkIn:new Date().toISOString(),
-      checkOut:'',
+      ...data, status:'inn',
+      checkIn:new Date().toISOString(), checkOut:'',
       updatedAt:new Date().toISOString()
-    };
-    rows.unshift(row);
+    });
   }
   save(); editDlg.close(); render();
 });
@@ -290,44 +297,288 @@ importFile.addEventListener('change', async ()=>{
   try{
     const data = JSON.parse(await f.text());
     if(!Array.isArray(data)) throw new Error('Forventer en liste ([])');
-
     const norm = (o)=>({
       id: o.id || (crypto.randomUUID?.()||('id-'+Date.now()+Math.random().toString(36).slice(2))),
       reg: (o.reg||'').toString().trim().toUpperCase(),
-      customer: o.customer||'',
-      phone: o.phone||'',
-      location: o.location||'',
-      brand: o.brand||'',
-      size: o.size||'',
-      rims: o.rims||'',
-      season: o.season||'',
-      notes: o.notes||'',
-      status: (o.status==='ut')?'ut':'inn',
-      checkIn: o.checkIn||'',
-      checkOut: o.checkOut||'',
-      updatedAt: o.updatedAt||new Date().toISOString()
+      customer: o.customer||'', phone: o.phone||'', location: o.location||'',
+      brand: o.brand||'', size: o.size||'', rims: o.rims||'', season: o.season||'',
+      notes: o.notes||'', status: (o.status==='ut')?'ut':'inn',
+      checkIn: o.checkIn||'', checkOut: o.checkOut||'', updatedAt: o.updatedAt||new Date().toISOString()
     });
-
     const incoming = data.map(norm);
     const map = new Map(rows.map(r=>[r.id, r]));
     const byReg = new Map(rows.map(r=>[r.reg, r]));
-
     for(const r of incoming){
       if(map.has(r.id)){ const old=map.get(r.id); map.set(r.id, (r.updatedAt>(old.updatedAt||''))?r:old); }
       else if(r.reg && byReg.has(r.reg)){ const old=byReg.get(r.reg); const keep = (r.updatedAt>(old.updatedAt||''))?r:old; map.set(keep.id, keep); }
       else { map.set(r.id, r); }
     }
     rows = Array.from(map.values()).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-    save(); render();
-    alert(`Importert ${incoming.length} rader ✔️`);
-  }catch(err){
-    alert('Import feilet: ' + err.message);
-  }finally{
-    importFile.value='';
-  }
+    save(); render(); alert(`Importert ${incoming.length} rader ✔️`);
+  }catch(err){ alert('Import feilet: ' + err.message); }
+  finally{ importFile.value=''; }
 });
 
-render();
+/* ================================
+   OFFLINE ETIKETTER – presets
+   ================================ */
+const LABEL_PRESETS = {
+  "A4-50x30":   { type:"sheet", page:"A4", cols:3, margin:8, gap:6, w:50, h:30 },
+  "DYMO-99012": { type:"roll",  w:89, h:28, margin:2, gap:2, cols:1 },
+  "DYMO-11354": { type:"roll",  w:57, h:32, margin:2, gap:2, cols:1 },
+  "DYMO-99014": { type:"roll",  w:101, h:54, margin:2, gap:2, cols:1 },
+  "BRO-DK11209":{ type:"roll",  w:62, h:29, margin:2, gap:2, cols:1 },
+  "BRO-DK11201":{ type:"roll",  w:90, h:29, margin:2, gap:2, cols:1 },
+  "BRO-DK11208":{ type:"roll",  w:90, h:38, margin:2, gap:2, cols:1 },
+  "BRO-DK22205":{ type:"roll",  w:62, h:30, margin:2, gap:2, cols:1 }
+};
+
+/* =========== Code128 strekkode (offline) =========== */
+const CODE128_PATTERNS = [
+"212222","222122","222221","121223","121322","131222","122213","122312","132212","221213",
+"221312","231212","112232","122132","122231","113222","123122","123221","223211","221132",
+"221231","213212","223112","312131","311222","321122","321221","312212","322112","322211",
+"212123","212321","232121","111323","131123","131321","112313","132113","132311","211313",
+"231113","231311","112133","112331","132131","113123","113321","133121","313121","211331",
+"231131","213113","213311","213131","311123","311321","331121","312113","312311","332111",
+"314111","221411","431111","111224","111422","121124","121421","141122","141221","112214",
+"112412","122114","122411","142112","142211","241211","221114","413111","241112","134111",
+"111242","121142","121241","114212","124112","124211","411212","421112","421211","212141",
+"214121","412121","111143","111341","131141","114113","114311","411113","411311","113141",
+"114131","311141","411131","211412","211214","211232","2331112"
+];
+const CODE128_START_B=104, CODE128_STOP=106;
+function code128Svg(text){
+  if(!text) text=" ";
+  const codes=[];
+  for(const ch of text){const c=ch.charCodeAt(0);codes.push((c>=32&&c<=126)?(c-32):("?".charCodeAt(0)-32));}
+  let checksum=CODE128_START_B; for(let i=0;i<codes.length;i++) checksum+=codes[i]*(i+1); checksum%=103;
+  const seq=[CODE128_START_B,...codes,checksum,CODE128_STOP];
+  let x=0, bars=[]; for(const pat of seq.map(i=>CODE128_PATTERNS[i])){let black=true;for(const d of pat){const w=+d;if(black)bars.push(`<rect x="${x}" y="0" width="${w}" height="60"/>`);x+=w;black=!black;}}
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x} 60" preserveAspectRatio="none"><g fill="#000">${bars.join("")}</g></svg>`;
+}
+
+/* =========== QR-kode (offline) – versjon 1, ECC M, alfanumerisk =========== */
+/* Alfanumerisk tabell (QR) */
+const QR_ALNUM = new Map([...("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:").split("").entries()].map(([i,c])=>[c,i]));
+/* Galois-felt for Reed–Solomon (GF(256), primitiv poly 0x11D) */
+const GF_EXP = new Uint8Array(512), GF_LOG = new Uint8Array(256);
+(function initGF(){
+  let x=1; for(let i=0;i<255;i++){GF_EXP[i]=x; GF_LOG[x]=i; x<<=1; if(x&0x100) x^=0x11D;}
+  for(let i=255;i<512;i++) GF_EXP[i]=GF_EXP[i-255];
+})();
+function gfMul(a,b){ if(a===0||b===0) return 0; return GF_EXP[(GF_LOG[a]+GF_LOG[b])%255]; }
+function rsGeneratorPoly(deg){
+  let poly=[1]; for(let i=0;i<deg;i++){ const next=[]; for(let j=0;j<poly.length;j++) next[j]=gfMul(poly[j],1); next.push(0);
+    for(let j=0;j<poly.length;j++) next[j]^=gfMul(poly[j], GF_EXP[i]); poly=next; }
+  return poly; // length deg+1
+}
+function rsComputeECC(data, ecLen){
+  const gen = rsGeneratorPoly(ecLen); const res=new Uint8Array(ecLen);
+  for(const d of data){
+    const factor = d ^ res[0];
+    res.copyWithin(0,1); res[res.length-1]=0;
+    if(factor!==0) for(let i=0;i<ecLen;i++) res[i]^=gfMul(gen[i], factor);
+  }
+  return res;
+}
+/* Bygg bitbuffer */
+class BitBuf{ constructor(){this.bits=[];}
+  put(val,len){ for(let i=len-1;i>=0;i--) this.bits.push((val>>>i)&1); }
+  toBytes(){ const out=[]; for(let i=0;i<this.bits.length;i+=8){ let b=0; for(let j=0;j<8&&i+j<this.bits.length;j++) b=(b<<1)|this.bits[i+j]; out.push(b); } return Uint8Array.from(out); }
+  get length(){return this.bits.length;}
+}
+/* Lag QR v1-M (21x21) alfanumerisk */
+function makeQrV1M_alnum(text){
+  // Valider/konverter til uppercase alfanumerisk
+  text = (text||"").toString().toUpperCase();
+  for(const ch of text) if(!QR_ALNUM.has(ch)) throw new Error("QR støtter kun A–Z, 0–9 og ' $%*+-./:'");
+  // Kapasitet v1-M alfanumerisk: opptil 20 tegn
+  if(text.length>20) throw new Error("Regnr for langt for QR v1-M");
+  // 1) Mode (0010), count (9 bits), data
+  const bb=new BitBuf();
+  bb.put(0b0010,4); bb.put(text.length,9);
+  for(let i=0;i<text.length;i+=2){
+    if(i+1<text.length){
+      const v = 45*QR_ALNUM.get(text[i]) + QR_ALNUM.get(text[i+1]);
+      bb.put(v,11);
+    }else{
+      bb.put(QR_ALNUM.get(text[i]),6);
+    }
+  }
+  // 2) Terminator opptil 4 bits
+  const TOTAL_DATA_BYTES = 16; // v1-M
+  const TOTAL_DATA_BITS  = TOTAL_DATA_BYTES*8;
+  const remain = TOTAL_DATA_BITS - bb.length;
+  bb.put(0, Math.min(4, Math.max(0, remain)));
+  // 3) Pad til byte
+  while(bb.length % 8) bb.put(0,1);
+  // 4) Pad bytes 0xEC, 0x11
+  let data = Array.from(bb.toBytes());
+  const PAD=[0xEC,0x11];
+  for(let i=0; data.length<TOTAL_DATA_BYTES; i++) data.push(PAD[i&1]);
+  data = Uint8Array.from(data);
+  // 5) Reed–Solomon ECC (10 bytes for v1-M)
+  const ecc = rsComputeECC(data, 10);
+  // 6) Interleaving (kun 1 blokk i v1-M) => data + ecc
+  const codewords = [...data, ...ecc];
+
+  // 7) Lag 21x21-matrise og legg til funksjonsmønstre
+  const n=21; const m = Array.from({length:n},()=>Array(n).fill(null));
+  function setFinder(r,c){
+    for(let y=-1;y<=7;y++)for(let x=-1;x<=7;x++){
+      const rr=r+y, cc=c+x;
+      if(rr<0||cc<0||rr>=n||cc>=n) continue;
+      const on = (x>=0&&x<=6&&y>=0&&y<=6)&& (x===0||x===6||y===0||y===6 || (x>=2&&x<=4&&y>=2&&y<=4));
+      m[rr][cc] = on ? 1 : 0; // inkluder hvit separator (0) i ramma
+    }
+  }
+  setFinder(0,0); setFinder(0,n-7); setFinder(n-7,0);
+  // Timing
+  for(let i=8;i<n-8;i++){ m[6][i]=(i%2)?0:1; m[i][6]=(i%2)?0:1; }
+  // Mørk modul
+  m[8][n-8]=1;
+  // Reserve format-info plasser (setter til 0 foreløpig)
+  function reserveFormat(){
+    for(let i=0;i<9;i++){ if(i!==6){ m[8][i] = m[8][i] ?? 0; m[i][8] = m[i][8] ?? 0; } }
+    for(let i=n-8;i<n;i++){ m[8][i] = m[8][i] ?? 0; m[i][8] = m[i][8] ?? 0; }
+  } reserveFormat();
+
+  // 8) Fyll data (kolonnepar fra høyre, opp/ned)
+  let idx=0, bitPos=7, byteIdx=0;
+  function nextBit(){ const b=(codewords[byteIdx]>>bitPos)&1; if(--bitPos<0){bitPos=7;byteIdx++;} return b; }
+  for(let col=n-1; col>0; col-=2){
+    if(col===6) col--; // hopp over timing-kolonne
+    let upward = ((n-1 - col) % 4)===0; // start nederst i høyre hjørne
+    for(let row=0; row<n; row++){
+      const r = upward ? (n-1-row) : row;
+      for(let cOffset=0;cOffset<2;cOffset++){
+        const c=col - cOffset;
+        if(m[r][c]!==null) continue; // hopp over funksjonsmønstre
+        if(byteIdx>=codewords.length) { m[r][c]=0; continue; }
+        m[r][c] = nextBit();
+      }
+    }
+  }
+
+  // 9) Mask (mønster 0): (r+c) % 2 == 0 -> inverter modul
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++){
+    if(m[r][c]===null) continue;
+    if(((r+c)&1)===0) m[r][c]^=1;
+  }
+
+  // 10) Format-info for ECC M (00) og mask 0 (000)
+  function writeFormat(val15){
+    // øvre venstre (r, c)
+    for(let i=0;i<6;i++) m[i][8] = (val15>>(14-i))&1;
+    m[7][8]=(val15>>8)&1; m[8][8]=(val15>>7)&1; m[8][7]=(val15>>6)&1;
+    for(let i=0;i<6;i++) m[8][5-i] = (val15>>(5-i))&1;
+
+    // øvre høyre og nedre venstre
+    for(let i=0;i<8;i++) m[8][n-1-i] = (val15>>(14-i))&1;
+    for(let i=0;i<7;i++) m[n-1-i][8] = (val15>>(i))&1;
+  }
+  // lag 15-bit format: [5-bit data | 10-bit BCH] xor 0x5412
+  const eccLevelBits = 0b00; // M
+  const maskBits = 0b000;    // mask 0
+  let fmt5 = (eccLevelBits<<3) | maskBits; // 5 bits
+  // BCH generator 0x537
+  let v = fmt5<<10, poly=0x537;
+  for(let i=14;i>=10;i--){ if(v&(1<<i)) v ^= (poly<<(i-10)); }
+  let fmt15 = ((fmt5<<10)|v) ^ 0x5412;
+  writeFormat(fmt15);
+
+  return m; // 21x21 matrise (0/1)
+}
+/* Tegn QR som SVG (skalering) */
+function qrToSvg(matrix){
+  const n = matrix.length, scale = 1; // 1 "unit" per modul, viewBox skaleres i CSS
+  let rects=[];
+  for(let y=0;y<n;y++){
+    let runStart=-1;
+    for(let x=0;x<n;x++){
+      if(matrix[y][x]===1 && runStart<0) runStart=x;
+      if((matrix[y][x]!==1 || x===n-1) && runStart>=0){
+        const runEnd = (matrix[y][x]===1 && x===n-1) ? x+1 : x;
+        rects.push(`<rect x="${runStart*scale}" y="${y*scale}" width="${(runEnd-runStart)*scale}" height="${scale}" />`);
+        runStart=-1;
+      }
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n*scale} ${n*scale}" preserveAspectRatio="none"><g fill="#000">${rects.join("")}</g></svg>`;
+}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+
+/* Åpne utskrift i ny fane med valgt preset – QR (venstre) + Code128 (høyre) */
+printBtn.addEventListener('click', ()=>{
+  const preset = LABEL_PRESETS[labelPresetEl.value] || LABEL_PRESETS["A4-50x30"];
+  const data = rows.map(r=>({reg:r.reg||'', customer:r.customer||''}));
+
+  const labelsHtml = data.map(r=>{
+    let qrSvg="";
+    try { qrSvg = qrToSvg(makeQrV1M_alnum((r.reg||"").toUpperCase())); }
+    catch(e){ qrSvg = `<svg></svg>`; }
+    const bcSvg = code128Svg(r.reg||"");
+    return `<div class="label">
+      <div class="line">
+        <div class="qr">${qrSvg}</div>
+        <div class="bc">${bcSvg}</div>
+      </div>
+      <div class="text">
+        <div class="reg">${esc(r.reg)}</div>
+        <div class="cust">${esc(r.customer)}</div>
+      </div>
+    </div>`;
+  }).join("");
+
+  const isSheet = preset.type==="sheet";
+  const pageDecl = isSheet && preset.page ? `@page { size: ${preset.page}; margin: ${preset.margin||8}mm; }` : `@page { margin: ${preset.margin||2}mm; }`;
+  const gridCols = isSheet ? `repeat(${preset.cols||3}, 1fr)` : `repeat(${preset.cols||1}, 1fr)`;
+  // QR-boks ~ 12mm, strekkode tar resten
+  const qrSize = Math.min(14, Math.floor(preset.h-10)); // mm
+  const bcHeight = Math.max(12, Math.min(preset.h-10, 18)); // mm
+
+  const html = `<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>Etiketter – ${esc(labelPresetEl.options[labelPresetEl.selectedIndex].text)}</title>
+  <style>
+    ${pageDecl}
+    *{box-sizing:border-box}
+    body{ font-family: system-ui, -apple-system, Segoe UI, sans-serif; background:#fff; color:#111; }
+    .controls{ margin:4mm 0; }
+    .grid{ display:grid; grid-template-columns:${gridCols}; gap:${preset.gap||2}mm; }
+    .label{
+      width:${preset.w}mm; height:${preset.h}mm;
+      border:1px solid #e5e7eb; border-radius:6px; padding:2.5mm;
+      display:flex; flex-direction:column; justify-content:space-between; background:#fff;
+    }
+    .line{ display:flex; align-items:center; gap:2mm; }
+    .qr{ width:${qrSize}mm; height:${qrSize}mm; display:flex; align-items:center; justify-content:center; }
+    .qr svg{ width:100%; height:100%; }
+    .bc{ flex:1; height:${bcHeight}mm; display:flex; align-items:center; }
+    .bc svg{ width:100%; height:100%; }
+    .text{ font-size:11px; line-height:1.1; margin-top:1mm; display:flex; justify-content:space-between; gap:4mm; }
+    .reg{ font-weight:700; }
+    .cust{ color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hint{ font-size:12px; color:#6b7280; }
+    @media print { .controls{ display:none; } body{ margin:0; } }
+  </style>
+  </head>
+  <body>
+    <div class="controls">
+      <strong>${esc(labelPresetEl.options[labelPresetEl.selectedIndex].text)}</strong>
+      <span class="hint"> – velg samme papirstørrelse/etikettrull i skriverinnstillingene.</span>
+      <div style="margin:6px 0;"><button onclick="window.print()">Skriv ut</button> <button onclick="window.close()">Lukk</button></div>
+      <hr/>
+    </div>
+    <div class="grid">${labelsHtml}</div>
+    <script>window.addEventListener('load', ()=> setTimeout(()=>window.print(), 300));</script>
+  </body></html>`;
+
+  const w = window.open("", "_blank"); w.document.open(); w.document.write(html); w.document.close();
+});
+
+/* ===== Start ===== */
+function init(){ render(); }
+init();
 </script>
 </body>
 </html>
