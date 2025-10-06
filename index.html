@@ -13,20 +13,20 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;transition:background .2s ease,color .2s ease}
 
+/* Header */
 header{background:var(--card);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--border);box-shadow:var(--shadow);position:sticky;top:0;z-index:10}
 .brand{display:flex;align-items:center;gap:8px}
 .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--accent))}
 .title{font-weight:800}
 .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 input[type="search"]{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;width:min(360px,48vw)}
+.counter{color:var(--muted);font-size:.9rem}
 .btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer;transition:.15s}
 .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
 .btn:hover{background:color-mix(in oklab,var(--brand) 14%,transparent)}
-.counter{color:var(--muted);font-size:.9rem}
-
 main{flex:1;padding:14px}
 
-/* kompaktliste */
+/* Kompaktliste */
 .card.compact{background:var(--card);padding:10px 14px;border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);transition:background .2s ease,border-color .2s ease}
 .card.compact.open{background:color-mix(in oklab,var(--brand) 6%,var(--card));border-color:color-mix(in oklab,var(--brand) 28%,var(--border))}
 .card.compact .mainline{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -46,7 +46,7 @@ main{flex:1;padding:14px}
 .actions .danger{background:var(--danger);border-color:var(--danger);color:#fff}
 .empty{color:var(--muted);text-align:center;margin-top:16px}
 
-/* dialog */
+/* Dialog */
 dialog{border:none;border-radius:12px;padding:18px 20px;background:var(--card);color:var(--text);max-width:520px;width:92%;box-shadow:var(--shadow);animation:pop .2s ease}
 @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
 dialog::backdrop{background:rgba(0,0,0,.45)}
@@ -56,6 +56,11 @@ label{font-size:.9rem;color:var(--muted)}
 input,textarea{width:100%;padding:8px 10px;margin-top:4px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text)}
 textarea{resize:vertical;min-height:70px}
 form .actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:4px}
+
+/* Hurtigvalg-bokser */
+.quickbox{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.quickbox button{background:color-mix(in oklab,var(--brand) 12%,transparent);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 10px;font-size:.85rem;cursor:pointer;transition:.15s}
+.quickbox button:hover{background:var(--brand);color:#fff}
 
 /* Flytende + Ny knapp */
 .fab{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--brand);color:#fff;border:none;border-radius:999px;padding:14px 16px;font-weight:700;box-shadow:var(--shadow)}
@@ -79,64 +84,54 @@ form .actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-conte
 
 <main id="list"></main>
 <div id="empty" class="empty" hidden>Ingen treff …</div>
-
 <button id="fab" class="fab">+ Ny</button>
 
 <!-- Ny/Rediger -->
 <dialog id="editDlg">
   <h2 id="dlgTitle">Ny registrering</h2>
   <form id="editForm" autocomplete="on">
-    <div><label>Regnr<input name="reg" required placeholder="FT31184" pattern="[A-Za-z]{2,3}[0-9]{4,5}|[A-Za-z0-9- ]+"></label></div>
+    <div><label>Regnr<input name="reg" required placeholder="FT31184"></label></div>
     <div><label>Kunde<input name="customer" placeholder="Ola Nordmann"></label></div>
     <div><label>Telefon<input name="phone" inputmode="tel" placeholder="90000000"></label></div>
-    <div><label>Plassering<input name="location" placeholder="R2-H3-P12" list="placeList"></label></div>
-    <div><label>Merke<input name="brand" placeholder="Nokian" list="brandList"></label></div>
-    <div><label>Størrelse<input name="size" placeholder="205/55 R16" list="sizeList"></label></div>
-    <div><label>Felg<input name="rims" placeholder="Alu/Stål" list="rimList"></label></div>
-    <div><label>Sesong<input name="season" placeholder="Sommer/Vinter/Helår" list="seasonList"></label></div>
+    <div><label>Plassering<input name="location" placeholder="Reol A1"></label></div>
+    <div><label>Merke<input name="brand" placeholder="Michelin"></label></div>
+    <div><label>Størrelse<input name="size" placeholder="205/55 R16"></label></div>
+
+    <!-- Felg + hurtigvalg -->
+    <div>
+      <label>Felg
+        <input name="rims" placeholder="Alu / Stål" id="rimsInput">
+      </label>
+      <div class="quickbox" id="rimsQuick">
+        <button type="button">Alu</button>
+        <button type="button">Stål</button>
+        <button type="button">Originale</button>
+        <button type="button">Uoriginale</button>
+      </div>
+    </div>
+
+    <!-- Sesong + hurtigvalg -->
+    <div>
+      <label>Sesong
+        <input name="season" placeholder="Sommer / Vinter" id="seasonInput">
+      </label>
+      <div class="quickbox" id="seasonQuick">
+        <button type="button">Sommerdekk</button>
+        <button type="button">Piggfri vinterdekk</button>
+        <button type="button">Piggdekk</button>
+      </div>
+    </div>
+
     <div class="row-2"><label>Notater<textarea name="notes" placeholder="Mønsterdybde, skader …"></textarea></label></div>
     <div class="actions">
       <button type="button" id="cancelEdit" class="btn">Avbryt</button>
       <button type="submit" class="btn primary" style="background:var(--brand);color:#fff;border-color:var(--brand)">Lagre</button>
     </div>
   </form>
-
-  <!-- Forslags-lister -->
-  <datalist id="seasonList">
-    <option value="Sommer"></option>
-    <option value="Vinter"></option>
-    <option value="Helår"></option>
-  </datalist>
-  <datalist id="rimList">
-    <option value="Alu"></option>
-    <option value="Stål"></option>
-  </datalist>
-  <datalist id="brandList">
-    <option value="Nokian"></option>
-    <option value="Continental"></option>
-    <option value="Michelin"></option>
-    <option value="Pirelli"></option>
-    <option value="Goodyear"></option>
-    <option value="Hankook"></option>
-  </datalist>
-  <datalist id="sizeList">
-    <option value="205/55 R16"></option>
-    <option value="195/65 R15"></option>
-    <option value="225/45 R17"></option>
-    <option value="235/45 R18"></option>
-    <option value="215/60 R16"></option>
-  </datalist>
-  <datalist id="placeList">
-    <option value="Reol A1"></option>
-    <option value="Reol A2"></option>
-    <option value="Reol B1"></option>
-    <option value="Reol B2"></option>
-    <option value="Kaldlager 1"></option>
-  </datalist>
 </dialog>
 
 <script>
-/* ------------ Tema-bryter ------------ */
+/* Tema-bryter */
 (function(){
   const key='dekk.theme';
   const btn=document.getElementById('themeBtn');
@@ -150,19 +145,19 @@ form .actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-conte
   });
 })();
 
-/* ------------ Data & lagring ------------ */
+/* Data & lagring */
 let rows = JSON.parse(localStorage.getItem('dekk.rows')||'[]');
 if(!rows.length){
   rows = [
     {id:crypto.randomUUID?.()||'1',reg:'FT31184',customer:'Ola Nordmann',phone:'90012345',location:'Reol A1',
-     brand:'Michelin',size:'205/55 R16',rims:'Alu',season:'Sommer',notes:'God stand',
+     brand:'Michelin',size:'205/55 R16',rims:'Alu',season:'Sommerdekk',notes:'God stand',
      status:'inn',checkIn:'2025-03-10',checkOut:'',updatedAt:new Date().toISOString()}
   ];
   localStorage.setItem('dekk.rows', JSON.stringify(rows));
 }
 const save=()=>localStorage.setItem('dekk.rows', JSON.stringify(rows));
 
-/* ------------ UI-elementer ------------ */
+/* UI-elementer */
 const listEl=document.getElementById('list');
 const emptyEl=document.getElementById('empty');
 const countEl=document.getElementById('count');
@@ -178,13 +173,12 @@ const editForm=document.getElementById('editForm');
 const dlgTitle=document.getElementById('dlgTitle');
 let editTarget=null;
 
-/* ------------ Hjelpere ------------ */
+/* Hjelpere */
 const fmt=(d)=>!d?'-':new Date(d).toLocaleDateString('no-NO');
 const matches=(r)=>{const q=searchEl.value.trim().toLowerCase(); if(!q) return true;
-  return [r.reg,r.customer,r.size,r.brand,r.location].some(v=>(v||'').toLowerCase().includes(q));};
+  return [r.reg,r.customer,r.size,r.brand,r.location,r.season,r.rims].some(v=>(v||'').toLowerCase().includes(q));};
 searchEl.addEventListener('input', render);
 
-/* expand helpers */
 function slideDown(el){el.hidden=false;el.style.maxHeight='0px';el.style.transition='max-height .2s ease';
   requestAnimationFrame(()=>{el.style.maxHeight=el.scrollHeight+'px';});
   el.addEventListener('transitionend',()=>{el.style.maxHeight='';el.style.transition='';},{once:true});}
@@ -192,7 +186,7 @@ function slideUp(el){el.style.maxHeight=el.scrollHeight+'px';el.style.transition
   requestAnimationFrame(()=>{el.style.maxHeight='0px';});
   el.addEventListener('transitionend',()=>{el.hidden=true;el.style.maxHeight='';el.style.transition='';},{once:true});}
 
-/* ------------ Render ------------ */
+/* Render */
 function render(){
   const filtered=rows.filter(matches);
   countEl.textContent = filtered.length ? `${filtered.length} treff` : '';
@@ -211,7 +205,8 @@ function render(){
     const details=document.createElement('div'); details.className='details'; details.hidden=true;
     details.innerHTML=`
       <div class="meta">📞 ${r.phone||'-'} · 📍 ${r.location||'-'}</div>
-      <div class="meta">🛞 ${r.season||'-'} · ${r.brand||'-'} · Felg: ${r.rims||'-'}</div>
+      <div class="meta">🛞 ${r.season||'-'} · Felg: ${r.rims||'-'}</div>
+      <div class="meta">Merk: ${r.brand||'-'} · ${r.size||'-'}</div>
       <div class="meta">Oppdatert: ${fmt(r.updatedAt)}</div>
       ${r.notes?`<div class="meta">📝 ${r.notes}</div>`:''}
       <div class="actions">
@@ -232,14 +227,29 @@ function render(){
   }
 }
 
-/* ------------ Ny/Rediger ------------ */
+/* Ny/Rediger */
 function openEdit(r){
   editTarget = r || null;
   dlgTitle.textContent = r ? 'Rediger registrering' : 'Ny registrering';
   editForm.reset();
   if(r){ for(const el of editForm.elements){ if(el.name && r[el.name]!=null) el.value = r[el.name]; } }
   editDlg.showModal();
+
+  // Hurtigvalgkobling
+  setupQuickFill('rimsQuick','rimsInput');
+  setupQuickFill('seasonQuick','seasonInput');
 }
+
+/* Hurtigvalg for Felg og Sesong */
+function setupQuickFill(boxId, inputId){
+  const box=document.getElementById(boxId);
+  const input=document.getElementById(inputId);
+  if(!box || !input) return;
+  box.querySelectorAll('button').forEach(btn=>{
+    btn.onclick=()=>{ input.value=btn.textContent; input.focus(); };
+  });
+}
+
 document.getElementById('cancelEdit').addEventListener('click', ()=> editDlg.close());
 document.getElementById('newBtn').addEventListener('click', ()=> openEdit(null));
 document.getElementById('fab').addEventListener('click', ()=> openEdit(null));
@@ -265,7 +275,7 @@ editForm.addEventListener('submit',(e)=>{
   save(); editDlg.close(); render();
 });
 
-/* ------------ Eksport / Import ------------ */
+/* Eksport / Import (JSON) */
 exportBtn.addEventListener('click', ()=>{
   const blob = new Blob([JSON.stringify(rows,null,2)], {type:'application/json'});
   const a = document.createElement('a');
@@ -274,16 +284,13 @@ exportBtn.addEventListener('click', ()=>{
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
 });
-
 importBtn.addEventListener('click', ()=> importFile.click());
 importFile.addEventListener('change', async ()=>{
   const f = importFile.files?.[0]; if(!f) return;
   try{
-    const text = await f.text();
-    const data = JSON.parse(text);
+    const data = JSON.parse(await f.text());
     if(!Array.isArray(data)) throw new Error('Forventer en liste ([])');
 
-    // enkel validering + normalisering
     const norm = (o)=>({
       id: o.id || (crypto.randomUUID?.()||('id-'+Date.now()+Math.random().toString(36).slice(2))),
       reg: (o.reg||'').toString().trim().toUpperCase(),
@@ -301,14 +308,12 @@ importFile.addEventListener('change', async ()=>{
       updatedAt: o.updatedAt||new Date().toISOString()
     });
 
-    // slå sammen med eksisterende (behold nyeste på samme id eller reg)
     const incoming = data.map(norm);
     const map = new Map(rows.map(r=>[r.id, r]));
-    // fallback nøkkel på reg hvis id mangler
     const byReg = new Map(rows.map(r=>[r.reg, r]));
 
     for(const r of incoming){
-      if(map.has(r.id)){ map.set(r.id, r.updatedAt>(map.get(r.id).updatedAt||'')?r:map.get(r.id)); }
+      if(map.has(r.id)){ const old=map.get(r.id); map.set(r.id, (r.updatedAt>(old.updatedAt||''))?r:old); }
       else if(r.reg && byReg.has(r.reg)){ const old=byReg.get(r.reg); const keep = (r.updatedAt>(old.updatedAt||''))?r:old; map.set(keep.id, keep); }
       else { map.set(r.id, r); }
     }
@@ -318,7 +323,7 @@ importFile.addEventListener('change', async ()=>{
   }catch(err){
     alert('Import feilet: ' + err.message);
   }finally{
-    importFile.value = '';
+    importFile.value='';
   }
 });
 
